@@ -3,11 +3,11 @@
  * @module middleware/monitoring
  */
 
-const morgan = require('morgan');
-const responseTime = require('response-time');
+import morgan from 'morgan';
+import responseTime from 'response-time';
 
-const logger = require('../utils/logger');
-const { metrics } = require('../utils/metrics');
+import logger from '../utils/logger.js';
+import { metrics } from '../utils/metrics.js';
 
 // Create a custom Morgan format
 morgan.token('user-id', (req) => (req.user ? req.user.id : 'anonymous'));
@@ -49,32 +49,19 @@ const metricsMiddleware = responseTime((req, res, time) => {
         operation = 'read';
         break;
       default:
-        operation = 'other';
+        operation = 'unknown';
     }
-    metrics.todoOperationsCounter.labels(operation).inc();
+
+    metrics.todoOperationsTotal.labels(operation).inc();
   }
 });
-
-// Track active users (update every minute)
-const activeUsers = new Set();
-setInterval(
-  () => {
-    metrics.activeUsersGauge.set(activeUsers.size);
-    activeUsers.clear();
-  },
-  5 * 60 * 1000
-); // Clear every 5 minutes
 
 // Middleware to track active users
 const activeUsersMiddleware = (req, res, next) => {
   if (req.user) {
-    activeUsers.add(req.user.id);
+    metrics.activeUsersTotal.labels(req.user.id).inc();
   }
   next();
 };
 
-module.exports = {
-  httpLogger,
-  metricsMiddleware,
-  activeUsersMiddleware,
-};
+export { httpLogger, metricsMiddleware, activeUsersMiddleware };

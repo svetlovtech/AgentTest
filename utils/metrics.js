@@ -3,7 +3,7 @@
  * @module utils/metrics
  */
 
-const promClient = require('prom-client');
+import promClient from 'prom-client';
 
 // Create a Registry to register the metrics
 const register = new promClient.Registry();
@@ -22,29 +22,30 @@ const httpRequestDurationMicroseconds = new promClient.Histogram({
   buckets: [0.1, 0.5, 1, 2, 5],
 });
 
-// Todo operations counter
-const todoOperationsCounter = new promClient.Counter({
+// Todo operations total
+const todoOperationsTotal = new promClient.Counter({
   name: 'todo_operations_total',
   help: 'Counter for todo operations',
   labelNames: ['operation'],
 });
 
-// Active users gauge
-const activeUsersGauge = new promClient.Gauge({
-  name: 'active_users',
-  help: 'Number of active users in the last 5 minutes',
+// Active users total
+const activeUsersTotal = new promClient.Counter({
+  name: 'active_users_total',
+  help: 'Total number of active users',
+  labelNames: ['user_id'],
 });
 
 // Register custom metrics
 register.registerMetric(httpRequestDurationMicroseconds);
-register.registerMetric(todoOperationsCounter);
-register.registerMetric(activeUsersGauge);
+register.registerMetric(todoOperationsTotal);
+register.registerMetric(activeUsersTotal);
 
-module.exports = {
-  register,
+export { 
+  register, 
   metrics: {
     httpRequestDurationMicroseconds,
-    todoOperationsCounter,
-    activeUsersGauge,
-  },
+    todoOperationsTotal,
+    activeUsersTotal,
+  } 
 };
