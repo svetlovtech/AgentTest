@@ -41,11 +41,10 @@ register.registerMetric(httpRequestDurationMicroseconds);
 register.registerMetric(todoOperationsTotal);
 register.registerMetric(activeUsersTotal);
 
-export { 
-  register, 
-  metrics: {
-    httpRequestDurationMicroseconds,
-    todoOperationsTotal,
-    activeUsersTotal,
-  } 
+const metrics = {
+  httpRequestDurationMicroseconds,
+  todoOperationsTotal,
+  activeUsersTotal,
 };
+
+export { register, metrics };
