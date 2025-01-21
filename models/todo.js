@@ -125,13 +125,17 @@ class Todo {
   }
 
   /**
-   * Delete a todo
-   * @param {string} id - The todo ID
-   * @returns {boolean} True if todo was deleted
+   * Delete a todo by its ID
+   * @param {string} id - The todo ID to delete
    */
   static delete(id) {
-    return todos.delete(id);
+    const todo = todos.get(id);
+    if (!todo) {
+      throw new Error('Todo not found');
+    }
+
+    todos.delete(id);
   }
 }
 
-module.exports = Todo;
+export default Todo;

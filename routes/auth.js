@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 
-import AuthController from '../controllers/authController.js';
+import { registerUser, loginUser } from '../controllers/authController.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
@@ -35,8 +35,56 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Routes
-router.post('/register', validateCredentials, handleValidationErrors, AuthController.register);
+router.post('/register', validateCredentials, handleValidationErrors, async (req, res) => {
+  try {
+    logger.info('Registration attempt', {
+      username: req.body.username,
+      email: req.body.email,
+      csrfToken: req.csrfToken ? req.csrfToken() : 'No token method',
+      headers: req.headers,
+    });
 
-router.post('/login', validateCredentials, handleValidationErrors, AuthController.login);
+    const { username, email, password } = req.body;
+    const result = await registerUser(req, res);
+    
+    return result;
+  } catch (error) {
+    logger.error('Registration error', {
+      error: error.message,
+      stack: error.stack,
+      username: req.body.username,
+    });
+    
+    return res.status(500).json({
+      message: 'Registration failed',
+      error: error.message,
+    });
+  }
+});
+
+router.post('/login', validateCredentials, handleValidationErrors, async (req, res) => {
+  try {
+    logger.info('Login attempt', {
+      username: req.body.username,
+      csrfToken: req.csrfToken ? req.csrfToken() : 'No token method',
+      headers: req.headers,
+    });
+
+    const result = await loginUser(req, res);
+    
+    return result;
+  } catch (error) {
+    logger.error('Login error', {
+      error: error.message,
+      stack: error.stack,
+      username: req.body.username,
+    });
+    
+    return res.status(500).json({
+      message: 'Login failed',
+      error: error.message,
+    });
+  }
+});
 
 export default router;

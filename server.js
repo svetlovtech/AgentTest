@@ -1,9 +1,12 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import expressSession from 'express-session';
 import helmet from 'helmet';
 
 import config from './config/config.js';
@@ -12,7 +15,6 @@ import {
   generalLimiter,
   authLimiter,
   csrfProtection,
-  handleCSRFError,
   validatePasswordComplexity,
   securityHeaders,
 } from './middleware/security.js';
@@ -60,10 +62,43 @@ app.use(activeUsersMiddleware);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cookieParser());
+app.use(expressSession({
+  secret: 'secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 3600000, // 1 hour
+  },
+}));
 
-// CSRF protection (after body parser)
-app.use(csrfProtection);
-app.use(handleCSRFError);
+// Middleware to ensure consistent CSRF token
+const ensureConsistentCSRFToken = (req, res, next) => {
+  // Ensure session exists
+  req.session = req.session || {};
+  
+  // Always generate a token if not present
+  req.session.csrfToken = req.session.csrfToken || crypto.randomBytes(32).toString('hex');
+  req.session.csrfTokenCreatedAt = req.session.csrfTokenCreatedAt || Date.now();
+
+  // Set CSRF token in cookie for client-side access
+  res.cookie('XSRF-TOKEN', req.session.csrfToken, {
+    httpOnly: false, // Allow client-side access
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 3600000, // 1 hour
+  });
+
+  // Attach csrfToken method to request
+  req.csrfToken = () => req.session.csrfToken;
+
+  next();
+};
+
+// Apply consistent CSRF token middleware before routes
+app.use(ensureConsistentCSRFToken);
 
 // Request logging middleware
 app.use((req, res, _next) => {
@@ -76,9 +111,9 @@ app.use((req, res, _next) => {
 });
 
 // Routes
-const authRoutes = require('./routes/auth.js');
-const monitoringRoutes = require('./routes/monitoring.js');
-const todoRoutes = require('./routes/todos.js');
+import authRoutes from './routes/auth.js';
+import monitoringRoutes from './routes/monitoring.js';
+import todoRoutes from './routes/todos.js';
 
 // Apply stricter rate limiting to auth routes
 app.use('/api/auth', authLimiter);
@@ -91,6 +126,19 @@ app.use('/api/monitoring', monitoringRoutes);
 // Serve the main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+// Add a route to get CSRF token explicitly
+app.get('/api/csrf-token', (req, res) => {
+  // Regenerate token to ensure freshness
+  req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  req.session.csrfTokenCreatedAt = Date.now();
+  
+  res.json({ 
+    csrfToken: req.session.csrfToken,
+    tokenName: 'XSRF-TOKEN',
+    headerName: 'X-CSRF-Token',
+  });
 });
 
 // Error handling middleware

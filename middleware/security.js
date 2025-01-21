@@ -3,10 +3,11 @@
  * @module middleware/security
  */
 
-const csrf = require('csurf');
-const rateLimit = require('express-rate-limit');
+import csrf from 'csurf';
+import rateLimit from 'express-rate-limit';
+import crypto from 'crypto';
 
-const logger = require('../utils/logger');
+import logger from '../utils/logger.js';
 
 // General rate limiter
 const generalLimiter = rateLimit({
@@ -44,27 +45,67 @@ const authLimiter = rateLimit({
   },
 });
 
+// Custom CSRF token generation and validation
+const createCSRFToken = () => {
+  // Generate a cryptographically strong random token
+  return crypto.randomBytes(32).toString('hex');
+};
+
 // CSRF protection middleware
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,
+const csrfProtection = (req, res, next) => {
+  // Ensure session and CSRF token exist
+  req.session = req.session || {};
+  
+  // Always generate a token if not present
+  req.session.csrfToken = req.session.csrfToken || createCSRFToken();
+  req.session.csrfTokenCreatedAt = req.session.csrfTokenCreatedAt || Date.now();
+
+  // Set CSRF token in cookie for client-side access
+  res.cookie('XSRF-TOKEN', req.session.csrfToken, {
+    httpOnly: false, // Allow client-side access
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-  },
-});
-
-// CSRF error handler
-const handleCSRFError = (err, req, res, next) => {
-  if (err.code !== 'EBADCSRFTOKEN') return next(err);
-
-  logger.warn('CSRF token validation failed', {
-    ip: req.ip,
-    path: req.path,
+    maxAge: 3600000, // 1 hour
   });
 
-  res.status(403).json({
-    message: 'Form tampered with',
-  });
+  // Attach csrfToken method to request for logging and other uses
+  req.csrfToken = () => req.session.csrfToken;
+
+  // Validate CSRF token for non-safe methods
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    // Check token in multiple locations
+    const tokenFromHeader = 
+      req.headers['x-csrf-token'] || 
+      req.headers['x-xsrf-token'];
+    const tokenFromBody = req.body ? req.body._csrf : null;
+    const tokenFromCookie = req.cookies['XSRF-TOKEN'];
+
+    // Validate token
+    const providedToken = tokenFromHeader || tokenFromBody || tokenFromCookie;
+    
+    if (!providedToken || providedToken !== req.session.csrfToken) {
+      logger.error('CSRF Token Validation Failed', {
+        method: req.method,
+        path: req.path,
+        headerToken: tokenFromHeader,
+        bodyToken: tokenFromBody,
+        cookieToken: tokenFromCookie,
+        sessionToken: req.session.csrfToken,
+      });
+
+      return res.status(403).json({
+        message: 'CSRF token validation failed',
+        error: 'Invalid or missing CSRF token',
+        guidance: [
+          'Retrieve a new CSRF token from /api/csrf-token',
+          'Include the token in X-CSRF-Token header',
+          'Ensure cookies are enabled',
+        ]
+      });
+    }
+  }
+
+  next();
 };
 
 // Password complexity middleware
@@ -108,32 +149,28 @@ const validatePasswordComplexity = (req, res, next) => {
 
 // Security headers middleware
 const securityHeaders = (req, res, next) => {
-  // HSTS
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-
-  // X-Frame-Options
+  // Prevent clickjacking
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
 
-  // X-Content-Type-Options
+  // Prevent MIME type sniffing
   res.setHeader('X-Content-Type-Options', 'nosniff');
 
-  // X-XSS-Protection
+  // Enable XSS protection in browsers
   res.setHeader('X-XSS-Protection', '1; mode=block');
 
-  // Referrer-Policy
+  // Referrer policy
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Permissions-Policy
-  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');
+  // Permissions Policy
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
 
   next();
 };
 
-module.exports = {
+export {
   generalLimiter,
   authLimiter,
   csrfProtection,
-  handleCSRFError,
   validatePasswordComplexity,
   securityHeaders,
 };

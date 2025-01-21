@@ -15,7 +15,7 @@ class TodoService {
    */
   static async createTodo(todoData, userId) {
     try {
-      const todo = await Todo.create({ ...todoData, userId });
+      const todo = Todo.create({ ...todoData, userId });
       logger.info('Todo created successfully', { todoId: todo.id, userId });
       return todo;
     } catch (error) {
@@ -32,7 +32,7 @@ class TodoService {
    */
   static async getTodos(filters, userId) {
     try {
-      const todos = await Todo.find({ ...filters, userId });
+      const todos = Todo.find({ ...filters, userId });
       logger.info('Todos retrieved successfully', {
         count: todos.length,
         filters,
@@ -54,20 +54,47 @@ class TodoService {
    */
   static async updateTodo(todoId, updates, userId) {
     try {
-      const todo = await Todo.findOneAndUpdate(
-        { _id: todoId, userId },
-        { $set: updates },
-        { new: true }
-      );
+      // First, find the todo to ensure it exists and belongs to the user
+      const existingTodos = Todo.find({ userId });
+      const todoToUpdate = existingTodos.find(todo => todo.id === todoId);
 
-      if (!todo) {
+      if (!todoToUpdate) {
         throw new Error('Todo not found or unauthorized');
       }
 
+      // Update the todo using our in-memory method
+      const updatedTodo = Todo.update(todoId, updates);
+
       logger.info('Todo updated successfully', { todoId, userId });
-      return todo;
+      return updatedTodo;
     } catch (error) {
       logger.error('Error updating todo', { error: error.message, todoId, userId });
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a todo
+   * @param {string} todoId - Todo ID
+   * @param {string} userId - User ID
+   * @returns {Promise<void>}
+   */
+  static async deleteTodo(todoId, userId) {
+    try {
+      // First, find the todo to ensure it exists and belongs to the user
+      const existingTodos = Todo.find({ userId });
+      const todoToDelete = existingTodos.find(todo => todo.id === todoId);
+
+      if (!todoToDelete) {
+        throw new Error('Todo not found or unauthorized');
+      }
+
+      // Delete the todo using our in-memory method
+      Todo.delete(todoId);
+
+      logger.info('Todo deleted successfully', { todoId, userId });
+    } catch (error) {
+      logger.error('Error deleting todo', { error: error.message, todoId, userId });
       throw error;
     }
   }
@@ -81,40 +108,23 @@ class TodoService {
    */
   static async shareTodo(todoId, userIds, ownerId) {
     try {
-      const todo = await Todo.findOneAndUpdate(
-        { _id: todoId, userId: ownerId },
-        { $addToSet: { sharedWith: { $each: userIds } } },
-        { new: true }
-      );
+      // First, find the todo to ensure it exists and belongs to the user
+      const existingTodos = Todo.find({ userId: ownerId });
+      const todoToShare = existingTodos.find(todo => todo.id === todoId);
 
-      if (!todo) {
+      if (!todoToShare) {
         throw new Error('Todo not found or unauthorized');
       }
+
+      // Update the todo with shared users
+      const updatedTodo = Todo.update(todoId, {
+        sharedWith: [...new Set([...(todoToShare.sharedWith || []), ...userIds])]
+      });
 
       logger.info('Todo shared successfully', { todoId, sharedWith: userIds, ownerId });
-      return todo;
+      return updatedTodo;
     } catch (error) {
       logger.error('Error sharing todo', { error: error.message, todoId, ownerId });
-      throw error;
-    }
-  }
-
-  /**
-   * Delete a todo
-   * @param {string} todoId - Todo ID
-   * @param {string} userId - User ID
-   */
-  static async deleteTodo(todoId, userId) {
-    try {
-      const result = await Todo.deleteOne({ _id: todoId, userId });
-
-      if (result.deletedCount === 0) {
-        throw new Error('Todo not found or unauthorized');
-      }
-
-      logger.info('Todo deleted successfully', { todoId, userId });
-    } catch (error) {
-      logger.error('Error deleting todo', { error: error.message, todoId, userId });
       throw error;
     }
   }
