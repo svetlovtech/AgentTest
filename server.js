@@ -6,6 +6,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const config = require('./config/config');
 const logger = require('./utils/logger');
+const { httpLogger, metricsMiddleware, activeUsersMiddleware } = require('./middleware/monitoring');
 
 const app = express();
 const PORT = config.port;
@@ -31,6 +32,11 @@ app.use(rateLimit({
     max: 100 // limit each IP to 100 requests per windowMs
 }));
 
+// Monitoring middleware
+app.use(httpLogger);
+app.use(metricsMiddleware);
+app.use(activeUsersMiddleware);
+
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -49,9 +55,11 @@ app.use((req, res, next) => {
 // Routes
 const todoRoutes = require('./routes/todos');
 const authRoutes = require('./routes/auth');
+const monitoringRoutes = require('./routes/monitoring');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/todos', todoRoutes);
+app.use('/api/monitoring', monitoringRoutes);
 
 // Serve the main page
 app.get('/', (req, res) => {
