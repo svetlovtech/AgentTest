@@ -3,9 +3,9 @@
  * @module routes/monitoring
  */
 
-const express = require('express');
+import express from 'express';
 
-const { register } = require('../utils/metrics');
+import { register } from '../utils/metrics.js';
 
 const router = express.Router();
 
@@ -50,11 +50,15 @@ router.get('/health', (req, res) => {
  */
 router.get('/metrics', async (req, res) => {
   try {
+    const metrics = await register.metrics();
     res.set('Content-Type', register.contentType);
-    res.end(await register.metrics());
+    res.send(metrics);
   } catch (error) {
-    res.status(500).json({ error: 'Error collecting metrics' });
+    res.status(500).json({ 
+      message: 'Error retrieving metrics', 
+      error: error.message 
+    });
   }
 });
 
-module.exports = router;
+export default router;
