@@ -3,10 +3,17 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
 const config = require('./config/config');
 const logger = require('./utils/logger');
 const { httpLogger, metricsMiddleware, activeUsersMiddleware } = require('./middleware/monitoring');
+const {
+  generalLimiter,
+  authLimiter,
+  csrfProtection,
+  handleCSRFError,
+  validatePasswordComplexity,
+  securityHeaders
+} = require('./middleware/security');
 
 const app = express();
 const PORT = config.port;
@@ -27,20 +34,22 @@ app.use(helmet({
     },
 }));
 app.use(cors());
-app.use(rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
-}));
+app.use(securityHeaders);
+app.use(generalLimiter);
 
 // Monitoring middleware
 app.use(httpLogger);
 app.use(metricsMiddleware);
 app.use(activeUsersMiddleware);
 
-// Middleware
+// Regular middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// CSRF protection (after body parser)
+app.use(csrfProtection);
+app.use(handleCSRFError);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -57,7 +66,11 @@ const todoRoutes = require('./routes/todos');
 const authRoutes = require('./routes/auth');
 const monitoringRoutes = require('./routes/monitoring');
 
+// Apply stricter rate limiting to auth routes
+app.use('/api/auth', authLimiter);
+app.use('/api/auth', validatePasswordComplexity);
 app.use('/api/auth', authRoutes);
+
 app.use('/api/todos', todoRoutes);
 app.use('/api/monitoring', monitoringRoutes);
 
