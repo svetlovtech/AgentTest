@@ -6,8 +6,29 @@
     <title>Todo App</title>
     <link rel="stylesheet" href="/styles/tailwind.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            z-index: 50;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <div id="notification" class="notification hidden"></div>
+    
     <div class="container mx-auto px-4 py-8 max-w-2xl">
         <!-- Auth Forms -->
         <div id="auth-forms" class="mb-8">
@@ -16,18 +37,24 @@
                 <div class="flex space-x-4">
                     <form id="login-form" class="flex-1">
                         <h3 class="text-lg font-semibold mb-2">Login</h3>
-                        <input type="text" placeholder="Username" name="username" class="w-full p-2 mb-2 border rounded">
-                        <input type="password" placeholder="Password" name="password" class="w-full p-2 mb-2 border rounded">
+                        <input type="text" placeholder="Username" name="username" required
+                               class="w-full p-2 mb-2 border rounded focus:ring-2 focus:ring-blue-400">
+                        <input type="password" placeholder="Password" name="password" required
+                               class="w-full p-2 mb-2 border rounded focus:ring-2 focus:ring-blue-400">
                         <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors">
-                            Login
+                            <span class="button-text">Login</span>
+                            <i class="fas fa-spinner fa-spin hidden"></i>
                         </button>
                     </form>
                     <form id="register-form" class="flex-1">
                         <h3 class="text-lg font-semibold mb-2">Register</h3>
-                        <input type="text" placeholder="Username" name="username" class="w-full p-2 mb-2 border rounded">
-                        <input type="password" placeholder="Password" name="password" class="w-full p-2 mb-2 border rounded">
+                        <input type="text" placeholder="Username" name="username" required
+                               class="w-full p-2 mb-2 border rounded focus:ring-2 focus:ring-blue-400">
+                        <input type="password" placeholder="Password" name="password" required
+                               class="w-full p-2 mb-2 border rounded focus:ring-2 focus:ring-blue-400">
                         <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors">
-                            Register
+                            <span class="button-text">Register</span>
+                            <i class="fas fa-spinner fa-spin hidden"></i>
                         </button>
                     </form>
                 </div>
@@ -45,7 +72,8 @@
                            class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required>
                     <button type="submit" 
                             class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
-                        Add Todo
+                        <span class="button-text">Add Todo</span>
+                        <i class="fas fa-spinner fa-spin hidden"></i>
                     </button>
                 </div>
                 <input type="text" id="todo-description" placeholder="Add a description (optional)" 
@@ -84,12 +112,32 @@
         let authToken = localStorage.getItem('authToken');
         const API_BASE = '/api';
 
-        // Auth forms handling
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
+        // Notification handling
+        function showNotification(message, type = 'error') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} text-white`;
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Form handling helper
+        async function handleFormSubmit(form, endpoint) {
+            const formData = new FormData(form);
+            const button = form.querySelector('button');
+            const buttonText = button.querySelector('.button-text');
+            const spinner = button.querySelector('.fa-spinner');
+
+            // Show loading state
+            form.classList.add('loading');
+            buttonText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+
             try {
-                const response = await fetch(`${API_BASE}/auth/login`, {
+                const response = await fetch(`${API_BASE}/auth/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -97,44 +145,43 @@
                         password: formData.get('password')
                     })
                 });
+
                 const data = await response.json();
+
                 if (response.ok) {
                     authToken = data.token;
                     localStorage.setItem('authToken', authToken);
+                    showNotification(`Successfully ${endpoint}ed!`, 'success');
                     showTodoApp();
                     fetchTodos();
                 } else {
-                    alert(data.message);
+                    const message = data.message || `Error during ${endpoint}`;
+                    if (data.errors) {
+                        showNotification(data.errors[0].msg);
+                    } else {
+                        showNotification(message);
+                    }
                 }
             } catch (error) {
-                alert('Error logging in');
+                console.error(`Error during ${endpoint}:`, error);
+                showNotification(`Failed to ${endpoint}. Please try again.`);
+            } finally {
+                // Reset loading state
+                form.classList.remove('loading');
+                buttonText.classList.remove('hidden');
+                spinner.classList.add('hidden');
             }
+        }
+
+        // Auth forms handling
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleFormSubmit(e.target, 'login');
         });
 
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(e.target);
-            try {
-                const response = await fetch(`${API_BASE}/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: formData.get('username'),
-                        password: formData.get('password')
-                    })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    authToken = data.token;
-                    localStorage.setItem('authToken', authToken);
-                    showTodoApp();
-                    fetchTodos();
-                } else {
-                    alert(data.message);
-                }
-            } catch (error) {
-                alert('Error registering');
-            }
+            await handleFormSubmit(e.target, 'register');
         });
 
         function showTodoApp() {
@@ -162,6 +209,7 @@
                 }
             } catch (error) {
                 console.error('Error fetching todos:', error);
+                showNotification('Failed to fetch todos. Please try again.');
             }
         }
 
@@ -211,9 +259,12 @@
                     document.getElementById('todo-title').value = '';
                     document.getElementById('todo-description').value = '';
                     fetchTodos();
+                } else {
+                    showNotification('Failed to add todo. Please try again.');
                 }
             } catch (error) {
                 console.error('Error adding todo:', error);
+                showNotification('Failed to add todo. Please try again.');
             }
         });
 
@@ -230,9 +281,12 @@
 
                 if (response.ok) {
                     fetchTodos();
+                } else {
+                    showNotification('Failed to update todo. Please try again.');
                 }
             } catch (error) {
                 console.error('Error updating todo:', error);
+                showNotification('Failed to update todo. Please try again.');
             }
         }
 
@@ -245,9 +299,12 @@
 
                 if (response.ok) {
                     fetchTodos();
+                } else {
+                    showNotification('Failed to delete todo. Please try again.');
                 }
             } catch (error) {
                 console.error('Error deleting todo:', error);
+                showNotification('Failed to delete todo. Please try again.');
             }
         }
     </script>
