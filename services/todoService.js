@@ -1,57 +1,127 @@
-// In-memory storage (replace with database in production)
-const todos = new Map();
-let nextId = 1;
+/**
+ * Todo service handling business logic for todos
+ * @module services/todoService
+ */
+
+const Todo = require('../models/todo');
+const logger = require('../utils/logger');
 
 class TodoService {
-  static getAllTodos(username) {
-    return Array.from(todos.values())
-      .filter(todo => todo.username === username);
+  /**
+   * Create a new todo
+   * @param {Object} todoData - Todo data
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Created todo
+   */
+  static async createTodo(todoData, userId) {
+    try {
+      const todo = Todo.create({ ...todoData, userId });
+      logger.info('Todo created successfully', { todoId: todo.id, userId });
+      return todo;
+    } catch (error) {
+      logger.error('Error creating todo', { error: error.message, userId });
+      throw error;
+    }
   }
 
-  static createTodo({ title, description, username }) {
-    if (!title) {
-      throw new Error('Title is required');
+  /**
+   * Get todos with filters
+   * @param {Object} filters - Search and filter criteria
+   * @param {string} userId - User ID
+   * @returns {Promise<Object[]>} Array of todos
+   */
+  static async getTodos(filters, userId) {
+    try {
+      const todos = Todo.find({ ...filters, userId });
+      logger.info('Todos retrieved successfully', { 
+        count: todos.length,
+        filters,
+        userId 
+      });
+      return todos;
+    } catch (error) {
+      logger.error('Error retrieving todos', { error: error.message, userId });
+      throw error;
     }
-
-    const todo = {
-      id: nextId++,
-      title,
-      description: description || '',
-      completed: false,
-      createdAt: new Date(),
-      username
-    };
-
-    todos.set(todo.id, todo);
-    return todo;
   }
 
-  static updateTodo(id, updates, username) {
-    const todo = todos.get(id);
-    
-    if (!todo || todo.username !== username) {
-      throw new Error('Todo not found');
+  /**
+   * Update a todo
+   * @param {string} todoId - Todo ID
+   * @param {Object} updates - Updates to apply
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} Updated todo
+   */
+  static async updateTodo(todoId, updates, userId) {
+    try {
+      const todo = Todo.update(todoId, updates);
+      if (todo.userId !== userId && !todo.sharedWith.includes(userId)) {
+        throw new Error('Unauthorized');
+      }
+      logger.info('Todo updated successfully', { todoId, userId });
+      return todo;
+    } catch (error) {
+      logger.error('Error updating todo', { 
+        error: error.message,
+        todoId,
+        userId 
+      });
+      throw error;
     }
-
-    const updatedTodo = {
-      ...todo,
-      ...updates,
-      id: todo.id, // prevent id from being updated
-      username: todo.username // prevent username from being updated
-    };
-
-    todos.set(id, updatedTodo);
-    return updatedTodo;
   }
 
-  static deleteTodo(id, username) {
-    const todo = todos.get(id);
-    
-    if (!todo || todo.username !== username) {
-      throw new Error('Todo not found');
+  /**
+   * Share a todo with other users
+   * @param {string} todoId - Todo ID
+   * @param {string[]} userIds - User IDs to share with
+   * @param {string} userId - Owner user ID
+   * @returns {Promise<Object>} Updated todo
+   */
+  static async shareTodo(todoId, userIds, userId) {
+    try {
+      const todo = Todo.share(todoId, userIds);
+      if (todo.userId !== userId) {
+        throw new Error('Unauthorized');
+      }
+      logger.info('Todo shared successfully', { 
+        todoId,
+        sharedWith: userIds,
+        userId 
+      });
+      return todo;
+    } catch (error) {
+      logger.error('Error sharing todo', { 
+        error: error.message,
+        todoId,
+        userId 
+      });
+      throw error;
     }
+  }
 
-    todos.delete(id);
+  /**
+   * Delete a todo
+   * @param {string} todoId - Todo ID
+   * @param {string} userId - User ID
+   * @returns {Promise<boolean>} True if deleted
+   */
+  static async deleteTodo(todoId, userId) {
+    try {
+      const todo = Todo.find({ id: todoId })[0];
+      if (!todo || (todo.userId !== userId && !todo.sharedWith.includes(userId))) {
+        throw new Error('Unauthorized');
+      }
+      const result = Todo.delete(todoId);
+      logger.info('Todo deleted successfully', { todoId, userId });
+      return result;
+    } catch (error) {
+      logger.error('Error deleting todo', { 
+        error: error.message,
+        todoId,
+        userId 
+      });
+      throw error;
+    }
   }
 }
 
