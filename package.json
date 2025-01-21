@@ -2,6 +2,7 @@
   "name": "todo-app",
   "version": "1.0.0",
   "description": "A secure and modern Todo application",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -1,4 +1,5 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -16,6 +17,10 @@ import {
   securityHeaders,
 } from './middleware/security.js';
 import logger from './utils/logger.js';
+
+// ES Module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = config.port;
