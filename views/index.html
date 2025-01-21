@@ -4,130 +4,252 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .todo-form {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        .todo-form input {
-            flex-grow: 1;
-            margin-right: 10px;
-        }
-        .todo-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .todo-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .todo-item.completed {
-            text-decoration: line-through;
-            color: #888;
-        }
-    </style>
+    <link rel="stylesheet" href="/styles/tailwind.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
-    <h1>Todo List</h1>
-    <form id="todo-form" class="todo-form">
-        <input type="text" id="todo-title" placeholder="Enter todo title" required>
-        <input type="text" id="todo-description" placeholder="Description (optional)">
-        <button type="submit">Add Todo</button>
-    </form>
-    <ul id="todo-list" class="todo-list"></ul>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-2xl">
+        <!-- Auth Forms -->
+        <div id="auth-forms" class="mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-4">
+                <h2 class="text-2xl font-bold mb-4">Authentication</h2>
+                <div class="flex space-x-4">
+                    <form id="login-form" class="flex-1">
+                        <h3 class="text-lg font-semibold mb-2">Login</h3>
+                        <input type="text" placeholder="Username" name="username" class="w-full p-2 mb-2 border rounded">
+                        <input type="password" placeholder="Password" name="password" class="w-full p-2 mb-2 border rounded">
+                        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition-colors">
+                            Login
+                        </button>
+                    </form>
+                    <form id="register-form" class="flex-1">
+                        <h3 class="text-lg font-semibold mb-2">Register</h3>
+                        <input type="text" placeholder="Username" name="username" class="w-full p-2 mb-2 border rounded">
+                        <input type="password" placeholder="Password" name="password" class="w-full p-2 mb-2 border rounded">
+                        <button type="submit" class="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition-colors">
+                            Register
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Todo App (hidden until authenticated) -->
+        <div id="todo-app" class="hidden">
+            <h1 class="text-3xl font-bold mb-8 text-center text-gray-800">Todo List</h1>
+            
+            <!-- Add Todo Form -->
+            <form id="todo-form" class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex space-x-4 mb-4">
+                    <input type="text" id="todo-title" placeholder="What needs to be done?" 
+                           class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+                    <button type="submit" 
+                            class="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors">
+                        Add Todo
+                    </button>
+                </div>
+                <input type="text" id="todo-description" placeholder="Add a description (optional)" 
+                       class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </form>
+
+            <!-- Todo List -->
+            <div id="todo-list" class="space-y-4"></div>
+
+            <!-- Todo Template -->
+            <template id="todo-template">
+                <div class="todo-item bg-white rounded-lg shadow-md p-4 transition-all hover:shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <button class="complete-btn w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <i class="fas fa-check text-white"></i>
+                            </button>
+                            <div>
+                                <h3 class="text-lg font-semibold"></h3>
+                                <p class="text-gray-600 text-sm"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500 date"></span>
+                            <button class="delete-btn text-red-500 hover:text-red-700 transition-colors">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
 
     <script>
-        const todoForm = document.getElementById('todo-form');
-        const todoList = document.getElementById('todo-list');
-        const todoTitleInput = document.getElementById('todo-title');
-        const todoDescriptionInput = document.getElementById('todo-description');
+        let authToken = localStorage.getItem('authToken');
+        const API_BASE = '/api';
 
-        // Fetch todos
-        async function fetchTodos() {
-            const response = await fetch('/api/todos');
-            const todos = await response.json();
-            renderTodos(todos);
-        }
-
-        // Render todos
-        function renderTodos(todos) {
-            todoList.innerHTML = '';
-            todos.forEach(todo => {
-                const li = document.createElement('li');
-                li.classList.add('todo-item');
-                if (todo.completed) li.classList.add('completed');
-                
-                li.innerHTML = `
-                    <span>${todo.title} ${todo.description ? `- ${todo.description}` : ''}</span>
-                    <div>
-                        <button onclick="toggleTodo(${todo.id}, ${todo.completed})">
-                            ${todo.completed ? 'Undo' : 'Complete'}
-                        </button>
-                        <button onclick="deleteTodo(${todo.id})">Delete</button>
-                    </div>
-                `;
-                todoList.appendChild(li);
-            });
-        }
-
-        // Add todo
-        todoForm.addEventListener('submit', async (e) => {
+        // Auth forms handling
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const title = todoTitleInput.value;
-            const description = todoDescriptionInput.value;
-
-            const response = await fetch('/api/todos', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ title, description })
-            });
-
-            if (response.ok) {
-                todoTitleInput.value = '';
-                todoDescriptionInput.value = '';
-                fetchTodos();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: formData.get('username'),
+                        password: formData.get('password')
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    showTodoApp();
+                    fetchTodos();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Error logging in');
             }
         });
 
-        // Toggle todo completion
-        async function toggleTodo(id, currentStatus) {
-            const response = await fetch(`/api/todos/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ completed: !currentStatus })
-            });
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: formData.get('username'),
+                        password: formData.get('password')
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    showTodoApp();
+                    fetchTodos();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                alert('Error registering');
+            }
+        });
 
-            if (response.ok) {
-                fetchTodos();
+        function showTodoApp() {
+            document.getElementById('auth-forms').classList.add('hidden');
+            document.getElementById('todo-app').classList.remove('hidden');
+        }
+
+        if (authToken) {
+            showTodoApp();
+            fetchTodos();
+        }
+
+        // Todo handling
+        async function fetchTodos() {
+            try {
+                const response = await fetch(`${API_BASE}/todos`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                if (response.ok) {
+                    const todos = await response.json();
+                    renderTodos(todos);
+                } else {
+                    localStorage.removeItem('authToken');
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error fetching todos:', error);
             }
         }
 
-        // Delete todo
+        function renderTodos(todos) {
+            const todoList = document.getElementById('todo-list');
+            todoList.innerHTML = '';
+            const template = document.getElementById('todo-template');
+
+            todos.forEach(todo => {
+                const todoElement = template.content.cloneNode(true);
+                const item = todoElement.querySelector('.todo-item');
+                
+                item.dataset.id = todo.id;
+                item.querySelector('h3').textContent = todo.title;
+                item.querySelector('p').textContent = todo.description || '';
+                item.querySelector('.date').textContent = new Date(todo.createdAt).toLocaleDateString();
+
+                const completeBtn = item.querySelector('.complete-btn');
+                if (todo.completed) {
+                    completeBtn.classList.add('bg-green-500');
+                    item.classList.add('opacity-75');
+                }
+
+                completeBtn.addEventListener('click', () => toggleTodo(todo.id, !todo.completed));
+                item.querySelector('.delete-btn').addEventListener('click', () => deleteTodo(todo.id));
+
+                todoList.appendChild(todoElement);
+            });
+        }
+
+        document.getElementById('todo-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('todo-title').value;
+            const description = document.getElementById('todo-description').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ title, description })
+                });
+
+                if (response.ok) {
+                    document.getElementById('todo-title').value = '';
+                    document.getElementById('todo-description').value = '';
+                    fetchTodos();
+                }
+            } catch (error) {
+                console.error('Error adding todo:', error);
+            }
+        });
+
+        async function toggleTodo(id, completed) {
+            try {
+                const response = await fetch(`${API_BASE}/todos/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ completed })
+                });
+
+                if (response.ok) {
+                    fetchTodos();
+                }
+            } catch (error) {
+                console.error('Error updating todo:', error);
+            }
+        }
+
         async function deleteTodo(id) {
-            const response = await fetch(`/api/todos/${id}`, {
-                method: 'DELETE'
-            });
+            try {
+                const response = await fetch(`${API_BASE}/todos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
 
-            if (response.ok) {
-                fetchTodos();
+                if (response.ok) {
+                    fetchTodos();
+                }
+            } catch (error) {
+                console.error('Error deleting todo:', error);
             }
         }
-
-        // Initial fetch
-        fetchTodos();
     </script>
 </body>
 </html>
