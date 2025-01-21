@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .todo-form {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .todo-form input {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .todo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .todo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .todo-item.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <form id="todo-form" class="todo-form">
+        <input type="text" id="todo-title" placeholder="Enter todo title" required>
+        <input type="text" id="todo-description" placeholder="Description (optional)">
+        <button type="submit">Add Todo</button>
+    </form>
+    <ul id="todo-list" class="todo-list"></ul>
+
+    <script>
+        const todoForm = document.getElementById('todo-form');
+        const todoList = document.getElementById('todo-list');
+        const todoTitleInput = document.getElementById('todo-title');
+        const todoDescriptionInput = document.getElementById('todo-description');
+
+        // Fetch todos
+        async function fetchTodos() {
+            const response = await fetch('/api/todos');
+            const todos = await response.json();
+            renderTodos(todos);
+        }
+
+        // Render todos
+        function renderTodos(todos) {
+            todoList.innerHTML = '';
+            todos.forEach(todo => {
+                const li = document.createElement('li');
+                li.classList.add('todo-item');
+                if (todo.completed) li.classList.add('completed');
+                
+                li.innerHTML = `
+                    <span>${todo.title} ${todo.description ? `- ${todo.description}` : ''}</span>
+                    <div>
+                        <button onclick="toggleTodo(${todo.id}, ${todo.completed})">
+                            ${todo.completed ? 'Undo' : 'Complete'}
+                        </button>
+                        <button onclick="deleteTodo(${todo.id})">Delete</button>
+                    </div>
+                `;
+                todoList.appendChild(li);
+            });
+        }
+
+        // Add todo
+        todoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = todoTitleInput.value;
+            const description = todoDescriptionInput.value;
+
+            const response = await fetch('/api/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, description })
+            });
+
+            if (response.ok) {
+                todoTitleInput.value = '';
+                todoDescriptionInput.value = '';
+                fetchTodos();
+            }
+        });
+
+        // Toggle todo completion
+        async function toggleTodo(id, currentStatus) {
+            const response = await fetch(`/api/todos/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ completed: !currentStatus })
+            });
+
+            if (response.ok) {
+                fetchTodos();
+            }
+        }
+
+        // Delete todo
+        async function deleteTodo(id) {
+            const response = await fetch(`/api/todos/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                fetchTodos();
+            }
+        }
+
+        // Initial fetch
+        fetchTodos();
+    </script>
+</body>
+</html>
