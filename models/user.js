@@ -1,6 +1,6 @@
-const bcrypt = require('bcryptjs');
+import bcrypt from 'bcryptjs';
 
-const logger = require('../utils/logger');
+import logger from '../utils/logger.js';
 
 // Simple in-memory user storage (replace with database in production)
 const users = new Map();
@@ -53,4 +53,4 @@ class User {
   }
 }
 
-module.exports = User;
+export default User;
