@@ -3,10 +3,17 @@
  * @module routes/todos
  */
 
-const express = require('express');
-const { body, query } = require('express-validator');
-const TodoController = require('../controllers/todoController');
-const auth = require('../middleware/auth');
+import express from 'express';
+import { body, query } from 'express-validator';
+
+import {
+  getTodos,
+  createTodo,
+  updateTodo,
+  shareTodo,
+  deleteTodo,
+} from '../controllers/todoController.js';
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -41,10 +48,11 @@ router.use(auth);
  *           format: date-time
  *         description: Filter todos with deadline before this date
  */
-router.get('/', [
-  query('completed').optional().isBoolean(),
-  query('deadlineBefore').optional().isISO8601()
-], TodoController.getTodos);
+router.get(
+  '/',
+  [query('completed').optional().isBoolean(), query('deadlineBefore').optional().isISO8601()],
+  getTodos
+);
 
 /**
  * @swagger
@@ -57,8 +65,6 @@ router.get('/', [
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - title
  *             properties:
  *               title:
  *                 type: string
@@ -72,13 +78,16 @@ router.get('/', [
  *                 type: string
  *                 format: date-time
  */
-router.post('/', [
-  body('title').trim().notEmpty().withMessage('Title is required'),
-  body('description').optional().trim(),
-  body('tags').optional().isArray(),
-  body('tags.*').optional().isString(),
-  body('deadline').optional().isISO8601()
-], TodoController.createTodo);
+router.post(
+  '/',
+  [
+    body('title').notEmpty().withMessage('Title is required'),
+    body('description').optional(),
+    body('tags').optional().isArray(),
+    body('deadline').optional().isISO8601(),
+  ],
+  createTodo
+);
 
 /**
  * @swagger
@@ -91,15 +100,38 @@ router.post('/', [
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               deadline:
+ *                 type: string
+ *                 format: date-time
+ *               completed:
+ *                 type: boolean
  */
-router.put('/:id', [
-  body('title').optional().trim().notEmpty(),
-  body('description').optional().trim(),
-  body('completed').optional().isBoolean(),
-  body('tags').optional().isArray(),
-  body('tags.*').optional().isString(),
-  body('deadline').optional().isISO8601()
-], TodoController.updateTodo);
+router.put(
+  '/:id',
+  [
+    body('title').optional().notEmpty(),
+    body('description').optional(),
+    body('tags').optional().isArray(),
+    body('deadline').optional().isISO8601(),
+    body('completed').optional().isBoolean(),
+  ],
+  updateTodo
+);
 
 /**
  * @swagger
@@ -112,11 +144,19 @@ router.put('/:id', [
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
  */
-router.post('/:id/share', [
-  body('userIds').isArray().withMessage('userIds must be an array'),
-  body('userIds.*').isString().withMessage('Each userId must be a string')
-], TodoController.shareTodo);
+router.post('/:id/share', [body('userIds').isArray()], shareTodo);
 
 /**
  * @swagger
@@ -130,6 +170,6 @@ router.post('/:id/share', [
  *         schema:
  *           type: string
  */
-router.delete('/:id', TodoController.deleteTodo);
+router.delete('/:id', deleteTodo);
 
-module.exports = router;
+export default router;

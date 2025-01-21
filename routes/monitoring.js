@@ -4,6 +4,7 @@
  */
 
 const express = require('express');
+
 const { register } = require('../utils/metrics');
 
 const router = express.Router();
@@ -22,18 +23,18 @@ const router = express.Router();
 router.get('/health', (req, res) => {
   // Add any health checks here (e.g., database connection)
   const isHealthy = true;
-  
+
   if (isHealthy) {
     res.json({
       status: 'healthy',
       timestamp: new Date(),
       uptime: process.uptime(),
-      memoryUsage: process.memoryUsage()
+      memoryUsage: process.memoryUsage(),
     });
   } else {
     res.status(503).json({
       status: 'unhealthy',
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 });

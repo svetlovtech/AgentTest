@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { toast } from 'react-hot-toast';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+
 import { api } from '../api/client';
-import { Todo } from '../types';
-import TodoItem from '../components/TodoItem';
-import TodoForm from '../components/TodoForm';
 import TodoFilter from '../components/TodoFilter';
+import TodoForm from '../components/TodoForm';
+import TodoItem from '../components/TodoItem';
+import type { Todo } from '../types';
 
 function TodoList() {
   const queryClient = useQueryClient();
@@ -16,14 +17,11 @@ function TodoList() {
   });
 
   // Fetch todos
-  const { data: todos, isLoading } = useQuery(['todos', filters], () =>
-    api.getTodos(filters)
-  );
+  const { data: todos, isLoading } = useQuery(['todos', filters], () => api.getTodos(filters));
 
   // Create todo mutation
   const createTodoMutation = useMutation(
-    (newTodo: Omit<Todo, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) =>
-      api.createTodo(newTodo),
+    (newTodo: Omit<Todo, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => api.createTodo(newTodo),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('todos');
@@ -37,8 +35,7 @@ function TodoList() {
 
   // Update todo mutation
   const updateTodoMutation = useMutation(
-    ({ id, updates }: { id: string; updates: Partial<Todo> }) =>
-      api.updateTodo(id, updates),
+    ({ id, updates }: { id: string; updates: Partial<Todo> }) => api.updateTodo(id, updates),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('todos');
@@ -51,23 +48,19 @@ function TodoList() {
   );
 
   // Delete todo mutation
-  const deleteTodoMutation = useMutation(
-    (id: string) => api.deleteTodo(id),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('todos');
-        toast.success('Todo deleted successfully!');
-      },
-      onError: (error: Error) => {
-        toast.error(`Failed to delete todo: ${error.message}`);
-      },
-    }
-  );
+  const deleteTodoMutation = useMutation((id: string) => api.deleteTodo(id), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('todos');
+      toast.success('Todo deleted successfully!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete todo: ${error.message}`);
+    },
+  });
 
   // Share todo mutation
   const shareTodoMutation = useMutation(
-    ({ id, userIds }: { id: string; userIds: string[] }) =>
-      api.shareTodo(id, userIds),
+    ({ id, userIds }: { id: string; userIds: string[] }) => api.shareTodo(id, userIds),
     {
       onSuccess: () => {
         queryClient.invalidateQueries('todos');
@@ -79,7 +72,9 @@ function TodoList() {
     }
   );
 
-  const handleCreateTodo = async (todo: Omit<Todo, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+  const handleCreateTodo = async (
+    todo: Omit<Todo, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+  ) => {
     await createTodoMutation.mutateAsync(todo);
   };
 
@@ -131,9 +126,7 @@ function TodoList() {
               onShare={handleShareTodo}
             />
           ))}
-          {todos?.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No todos found</p>
-          )}
+          {todos?.length === 0 && <p className="text-gray-500 text-center py-4">No todos found</p>}
         </div>
       </div>
     </div>

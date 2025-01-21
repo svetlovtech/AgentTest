@@ -1,13 +1,25 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
 import App from './App';
-import { AuthProvider } from './hooks/useAuth';
 import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+
+root.render(
   <React.StrictMode>
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
       <App />
-    </AuthProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

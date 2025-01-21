@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+
 const logger = require('../utils/logger');
 
 // Simple in-memory user storage (replace with database in production)
@@ -17,7 +18,7 @@ class User {
     const user = {
       username,
       password: hashedPassword,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     users.set(username, user);

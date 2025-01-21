@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Todo } from '../types';
+
+import type { Todo } from '../types';
 
 interface TodoItemProps {
   todo: Todo;
@@ -36,11 +37,12 @@ function TodoItem({ todo, onUpdate, onDelete, onShare }: TodoItemProps) {
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor={`todo-edit-title-${todo.id}`} className="block text-sm font-medium text-gray-700">
               Title
             </label>
             <input
               type="text"
+              id={`todo-edit-title-${todo.id}`}
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -48,10 +50,11 @@ function TodoItem({ todo, onUpdate, onDelete, onShare }: TodoItemProps) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor={`todo-edit-description-${todo.id}`} className="block text-sm font-medium text-gray-700">
               Description
             </label>
             <textarea
+              id={`todo-edit-description-${todo.id}`}
               value={editedDescription}
               onChange={(e) => setEditedDescription(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -81,9 +84,7 @@ function TodoItem({ todo, onUpdate, onDelete, onShare }: TodoItemProps) {
               <input
                 type="checkbox"
                 checked={todo.completed}
-                onChange={() =>
-                  onUpdate(todo.id, { completed: !todo.completed })
-                }
+                onChange={() => onUpdate(todo.id, { completed: !todo.completed })}
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
               <h3
@@ -107,10 +108,7 @@ function TodoItem({ todo, onUpdate, onDelete, onShare }: TodoItemProps) {
               >
                 Share
               </button>
-              <button
-                onClick={() => onDelete(todo.id)}
-                className="text-red-600 hover:text-red-900"
-              >
+              <button onClick={() => onDelete(todo.id)} className="text-red-600 hover:text-red-900">
                 Delete
               </button>
             </div>
@@ -134,9 +132,7 @@ function TodoItem({ todo, onUpdate, onDelete, onShare }: TodoItemProps) {
             </p>
           )}
           {todo.sharedWith.length > 0 && (
-            <p className="mt-2 text-sm text-gray-500">
-              Shared with: {todo.sharedWith.join(', ')}
-            </p>
+            <p className="mt-2 text-sm text-gray-500">Shared with: {todo.sharedWith.join(', ')}</p>
           )}
         </div>
       )}
@@ -144,7 +140,11 @@ function TodoItem({ todo, onUpdate, onDelete, onShare }: TodoItemProps) {
       {isSharing && (
         <div className="mt-4 border-t pt-4">
           <form onSubmit={handleShare} className="flex space-x-2">
+            <label htmlFor={`todo-share-email-${todo.id}`} className="sr-only">
+              Enter email to share with
+            </label>
             <input
+              id={`todo-share-email-${todo.id}`}
               type="email"
               value={shareEmail}
               onChange={(e) => setShareEmail(e.target.value)}

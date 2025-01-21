@@ -1,51 +1,37 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
 import { Toaster } from 'react-hot-toast';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
 import Layout from './components/Layout';
-import TodoList from './pages/TodoList';
+import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider } from './hooks/useAuth';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import { useAuth } from './hooks/useAuth';
+import TodoList from './pages/TodoList';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-}
-
-function App() {
+const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Toaster position="top-right" />
+    <Router>
+      <AuthProvider>
+        <Layout>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route
-              path="/"
+            <Route 
+              path="/" 
               element={
                 <PrivateRoute>
-                  <Layout>
-                    <TodoList />
-                  </Layout>
+                  <TodoList />
                 </PrivateRoute>
-              }
+              } 
             />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </div>
-      </Router>
-    </QueryClientProvider>
+        </Layout>
+        <Toaster />
+      </AuthProvider>
+    </Router>
   );
-}
+};
 
 export default App;

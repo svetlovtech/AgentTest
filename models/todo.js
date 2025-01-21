@@ -28,7 +28,7 @@ class Todo {
       deadline: todoData.deadline || null,
       sharedWith: todoData.sharedWith || [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     todos.set(todo.id, todo);
@@ -49,32 +49,31 @@ class Todo {
     let results = Array.from(todos.values());
 
     if (filters.userId) {
-      results = results.filter(todo => 
-        todo.userId === filters.userId || todo.sharedWith.includes(filters.userId)
+      results = results.filter(
+        (todo) => todo.userId === filters.userId || todo.sharedWith.includes(filters.userId)
       );
     }
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
-      results = results.filter(todo =>
-        todo.title.toLowerCase().includes(searchLower) ||
-        todo.description.toLowerCase().includes(searchLower)
+      results = results.filter(
+        (todo) =>
+          todo.title.toLowerCase().includes(searchLower) ||
+          todo.description.toLowerCase().includes(searchLower)
       );
     }
 
     if (filters.tags && filters.tags.length > 0) {
-      results = results.filter(todo =>
-        filters.tags.some(tag => todo.tags.includes(tag))
-      );
+      results = results.filter((todo) => filters.tags.some((tag) => todo.tags.includes(tag)));
     }
 
     if (typeof filters.completed === 'boolean') {
-      results = results.filter(todo => todo.completed === filters.completed);
+      results = results.filter((todo) => todo.completed === filters.completed);
     }
 
     if (filters.deadlineBefore) {
-      results = results.filter(todo =>
-        todo.deadline && new Date(todo.deadline) <= new Date(filters.deadlineBefore)
+      results = results.filter(
+        (todo) => todo.deadline && new Date(todo.deadline) <= new Date(filters.deadlineBefore)
       );
     }
 
@@ -96,7 +95,7 @@ class Todo {
     const updatedTodo = {
       ...todo,
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     todos.set(id, updatedTodo);
@@ -118,7 +117,7 @@ class Todo {
     const updatedTodo = {
       ...todo,
       sharedWith: [...new Set([...todo.sharedWith, ...userIds])],
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     todos.set(id, updatedTodo);

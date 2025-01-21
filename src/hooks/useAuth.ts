@@ -1,21 +1,27 @@
+import type { ReactNode } from 'react';
 import { useState, useEffect, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { api } from '../api/client';
-import { User } from '../types';
 
-interface AuthContextType {
+import type { User } from '../types';
+import { api } from '../api/client';
+
+export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
+}
+
+export interface AuthProviderProps {
+  children: ReactNode;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -30,10 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string): Promise<void> => {
     try {
       const response = await api.login(username, password);
       setUser(response.user);
+      localStorage.setItem('token', response.token);
       navigate('/');
       toast.success('Successfully logged in!');
     } catch (error) {
@@ -42,10 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (username: string, password: string) => {
+  const register = async (username: string, email: string, password: string): Promise<void> => {
     try {
-      const response = await api.register(username, password);
+      const response = await api.register(username, email, password);
       setUser(response.user);
+      localStorage.setItem('token', response.token);
       navigate('/');
       toast.success('Successfully registered!');
     } catch (error) {
@@ -54,33 +62,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = (): void => {
+    localStorage.removeItem('token');
     api.logout();
     setUser(null);
     navigate('/login');
     toast.success('Successfully logged out!');
   };
 
+  const contextValue: AuthContextType = {
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    register,
+    logout,
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

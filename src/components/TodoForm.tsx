@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Todo } from '../types';
+
+import type { Todo } from '../types';
 
 interface TodoFormProps {
   onSubmit: (todo: Omit<Todo, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
@@ -46,10 +47,7 @@ function TodoForm({ onSubmit }: TodoFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label
-          htmlFor="title"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
           Title
         </label>
         <input
@@ -64,10 +62,7 @@ function TodoForm({ onSubmit }: TodoFormProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="description"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
           Description
         </label>
         <textarea
@@ -81,10 +76,7 @@ function TodoForm({ onSubmit }: TodoFormProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="tags"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
           Tags
         </label>
         <div className="mt-1">
@@ -120,10 +112,7 @@ function TodoForm({ onSubmit }: TodoFormProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="deadline"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="deadline" className="block text-sm font-medium text-gray-700">
           Deadline
         </label>
         <input

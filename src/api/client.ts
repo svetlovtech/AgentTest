@@ -1,4 +1,4 @@
-import { AuthResponse, Todo, ApiError } from '../types';
+import type { AuthResponse, Todo } from '../types';
 
 const API_URL = process.env.API_URL || 'http://localhost:3000/api';
 
@@ -9,10 +9,7 @@ class ApiClient {
     this.token = localStorage.getItem('token');
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(this.token && { Authorization: `Bearer ${this.token}` }),

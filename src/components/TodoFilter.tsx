@@ -55,10 +55,7 @@ function TodoFilter({ filters, onChange }: TodoFilterProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label
-          htmlFor="search"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="search" className="block text-sm font-medium text-gray-700">
           Search
         </label>
         <input
@@ -72,10 +69,7 @@ function TodoFilter({ filters, onChange }: TodoFilterProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="status"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="status" className="block text-sm font-medium text-gray-700">
           Status
         </label>
         <select
@@ -91,10 +85,7 @@ function TodoFilter({ filters, onChange }: TodoFilterProps) {
       </div>
 
       <div>
-        <label
-          htmlFor="tag-filter"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="tag-filter" className="block text-sm font-medium text-gray-700">
           Filter by Tags
         </label>
         <input
