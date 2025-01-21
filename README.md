@@ -1,95 +1,166 @@
 # Todo Application
 
-A modern, secure Todo application built with Express.js and a clean, responsive UI.
+## Overview
 
-## Features
+A modern, secure Todo application built with React, TypeScript, and Vite, featuring robust authentication and a responsive user interface.
 
-- User authentication with JWT
-- Secure API endpoints with input validation
-- Modern UI with Tailwind CSS
-- Real-time updates
-- Todo management (create, read, update, delete)
-- User-specific todos
-- Responsive design for mobile and desktop
+## 🌟 Features
 
-## Project Structure
+- 🔐 Secure user authentication
+- 📝 Todo management (create, read, update, delete)
+- 🚀 Fast development with Vite
+- 💻 TypeScript for type safety
+- 📱 Responsive and modern UI
+- 🧪 Comprehensive testing setup
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have met the following requirements:
+
+- Node.js (v18.0.0 or later)
+- npm (v9.0.0 or later)
+- Git
+
+## 🛠️ System Requirements
+
+- Operating System: 
+  - macOS 10.15+
+  - Windows 10+
+  - Linux (Ubuntu 20.04+, Fedora 33+)
+- RAM: 8GB minimum (16GB recommended)
+- Disk Space: 500MB free
+
+## 🚀 Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/todo-app.git
+cd todo-app
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Environment Configuration
+
+Create a `.env` file in the project root with the following configuration:
+
+```env
+# Application Configuration
+VITE_APP_NAME=TodoApp
+VITE_APP_VERSION=1.0.0
+
+# API Configuration
+VITE_API_BASE_URL=http://localhost:3000/api
+VITE_API_TIMEOUT=10000
+
+# Authentication
+VITE_AUTH_TOKEN_KEY=todo_app_token
+```
+
+### 4. Running the Application
+
+#### Development Mode
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`
+
+#### Production Build
+
+```bash
+npm run build
+npm run preview
+```
+
+## 🔧 Available Scripts
+
+- `npm run dev`: Start development server
+- `npm run build`: Create production build
+- `npm run preview`: Serve production build locally
+- `npm run lint`: Run ESLint
+- `npm run test`: Run Jest tests
+- `npm run type-check`: Perform TypeScript type checking
+- `npm run format`: Format code using Prettier
+
+## 🗂️ Project Structure
 
 ```
+todo-app/
+├── src/
+│   ├── components/     # Reusable React components
+│   ├── hooks/          # Custom React hooks
+│   ├── types/          # TypeScript type definitions
+│   ├── services/       # API and business logic
+│   ├── utils/          # Utility functions
+│   └── api/            # API client and request handlers
+├── tests/              # Test suites
 ├── config/             # Configuration files
-├── controllers/        # Request handlers
-├── middleware/         # Custom middleware
-├── models/            # Data models
-├── public/            # Static files
-│   └── styles/        # CSS files
-├── routes/            # API routes
-├── services/          # Business logic
-├── utils/             # Utility functions
-└── views/             # Frontend views
+└── public/             # Static assets
 ```
 
-## Security Features
+## 🔐 Authentication Flow
 
-- JWT authentication
-- Input validation and sanitization
-- Rate limiting
-- Security headers with Helmet
-- CORS protection
-- Error handling middleware
+1. User registers with username, email, and password
+2. Credentials are validated on the client and server
+3. Successful registration generates a JWT token
+4. Token is stored in localStorage
+5. Authenticated routes are protected
+6. Token is sent with each API request
 
-## API Endpoints
+## 🧪 Testing
 
-### Authentication
-- `POST /api/auth/register` - Register a new user
-- `POST /api/auth/login` - Login user
+Run comprehensive test suites:
 
-### Todos
-- `GET /api/todos` - Get all todos
-- `POST /api/todos` - Create a new todo
-- `PUT /api/todos/:id` - Update a todo
-- `DELETE /api/todos/:id` - Delete a todo
+```bash
+npm test
+```
 
-## Getting Started
+### Test Coverage
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file based on `.env.example`
-4. Start the server:
-   ```bash
-   npm start
-   ```
-   For development:
-   ```bash
-   npm run dev
-   ```
+- Unit Tests: React components and hooks
+- Integration Tests: API interactions
+- End-to-End Tests: User flows
 
-## Environment Variables
-
-- `PORT` - Server port (default: 3000)
-- `JWT_SECRET` - Secret key for JWT
-- `JWT_EXPIRATION` - Token expiration time
-- `NODE_ENV` - Environment (development/production)
-
-## Technologies Used
-
-- Express.js - Backend framework
-- JWT - Authentication
-- Winston - Logging
-- Express Validator - Input validation
-- Helmet - Security headers
-- Tailwind CSS - Styling
-- Font Awesome - Icons
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## License
+### Contribution Guidelines
 
-MIT
+- Follow TypeScript best practices
+- Write comprehensive tests
+- Maintain code formatting
+- Update documentation
+
+## 🐛 Reporting Issues
+
+Report issues on the GitHub repository's issue tracker with:
+- Detailed description
+- Steps to reproduce
+- Expected vs. actual behavior
+- Environment details
+
+## 📜 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## 📞 Contact
+
+Your Name - [your.email@example.com](mailto:your.email@example.com)
+
+Project Link: [https://github.com/yourusername/todo-app](https://github.com/yourusername/todo-app)
+
+---
+
+**Happy Coding! 🚀**
